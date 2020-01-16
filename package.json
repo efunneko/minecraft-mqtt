@@ -1,0 +1,36 @@
+{
+  "name": "minecraft-mqtt",
+  "version": "0.0.1",
+  "description": "Carry Minecraft communication over MQTT",
+  "main": "src/main.js",
+  "scripts": {
+    "build": "webpack --mode=development --source-maps",
+    "watch": "webpack --mode=development --source-maps --watch",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/efunneko/minecraft-mqtt.git"
+  },
+  "keywords": [
+    "minecraft",
+    "mqtt"
+  ],
+  "author": "Edward Funnekotter",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/efunneko/minecraft-mqtt/issues"
+  },
+  "homepage": "https://github.com/efunneko/minecraft-mqtt#readme",
+  "dependencies": {
+    "mqtt": "^3.0.0",
+    "source-map-support": "^0.5.9",
+    "uuid": "^3.3.3"
+  },
+  "devDependencies": {
+    "inline-source-map": "^0.6.2",
+    "webpack": "^4.28.1",
+    "webpack-cli": "^3.2.1",
+    "webpack-node-externals": "^1.7.2"
+  }
+}
