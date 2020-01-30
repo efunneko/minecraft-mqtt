@@ -38,6 +38,9 @@ export class ServerConnection {
           onDisconnect: ()           => this.onDisconnect()
         }
       );
+      if (this.callbacks.onConnect) {
+        this.callbacks.onConnect(this.clientId);
+      }
     });    
   }
 

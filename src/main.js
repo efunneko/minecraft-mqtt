@@ -56,32 +56,26 @@ class Main {
 
   start() {
 
-    // Is this a client or a server?
-    if (this.mode === "server") {
-      
-    }
-
-    
     // Connect to the broker
-    let broker  = mqtt.connect(this.args.broker,
+    let broker  = mqtt.connect(this.args["broker-url"],
                                {username: this.args.username,
                                 password: this.args.password});
- 
-    broker.on('connect', function () {
-      broker.subscribe('presence', function (err) {
-        if (!err) {
-          broker.publish('presence', 'Hello mqtt')
-        }
-      });
+
+    console.log("After connect");
+    broker.on('connect', () => {
+      console.log("Connected to broker with mode ", this.mode);
+      // Is this a client or a server?
+      if (this.mode === "server") {
+        this.server = new Server(broker, this.args.server);
+      }
+      else if (this.mode === "client") {
+        this.client = new Client(broker, this.listenPort);
+      }
+
     });
  
-    client.on('message', function (topic, message) {
-      // message is Buffer
-      console.log(message.toString());
-      client.end();
-    });
+
     
-    // Probe for a server - use the first to respond (there should only be one)
     
     
   }

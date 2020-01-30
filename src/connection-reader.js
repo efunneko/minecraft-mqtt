@@ -8,7 +8,7 @@ const connStates = {
 };
 
 
-class ConnectionReader {
+export class ConnectionReader {
   constructor(socket, callbacks) {
     this.socket    = socket;
     this.callbacks = callbacks;
@@ -76,6 +76,23 @@ class ConnectionReader {
       console.error("Malformed packet", this.currPacket);
     }
     this.callbacks.onPacket(pktIdInfo[1], this.currPacket);
+  }
+
+  getVarInt(data, startingOffset) {
+    let index = startingOffset || 0;
+    let start = index;
+    let stop  = data.length;
+    let val   = 0;
+    for (;index <= stop; index++) {
+      let byte = data.charCodeAt(index);
+      val = (val << 8) + byte;
+      if (!(byte & 0x80)) {
+        return [index - start, val];
+      }
+    }
+
+    return [0, 0];
+    
   }
 
 }

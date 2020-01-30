@@ -13,10 +13,10 @@ const states = {
 
 export class Client {
   constructor(broker, port) {
-    this.broker = broker;
-    this.port   = port;
-
-    this.state  = states.UNCONNECTED;
+    this.broker  = broker;
+    this.port    = port;
+    this.state   = states.UNCONNECTED;
+    this.packets = [];
 
     // Client ID defined by the client
     this.clientUuid = uuidv4(); 
@@ -33,21 +33,28 @@ export class Client {
     broker.on('message', (topic, message) => {
       this.processMessage(topic, message);
     });
+
+    this.startListener();
         
   }
 
   startListener() {
 
+    console.log("Starting listener on port", this.port);
     this.server = net.createServer((socket) => {
+      console.log("Now listening to port", this.port);
       this.socket     = socket;
-      this.connReader = new ConnectionReader(
-        socket,
-        {
-          onPacket:     pkt => this.processPacket(pkt),
-          onDisconnect: ()  => this.clientDisconnect()
-        }
-      );
-      this.register();
+      if (this.state == states.UNCONNECTED) {
+        this.connReader = new ConnectionReader(
+          socket,
+          {
+            onPacket:     pkt => this.processPacket(pkt),
+            onDisconnect: ()  => this.clientDisconnect()
+          }
+        );
+        this.register();
+        console.log("New connection");
+      }
     });
 
     this.server.listen(this.port, '0.0.0.0');
@@ -66,12 +73,17 @@ export class Client {
   }
 
   processPacket(pktId, packet) {
-    this.broker.publish(`minecraft/server/${this.clientId}/packet/${pktId}`, packet);
+    if (this.state != states.CONNECTED) {
+      this.packets.push([pktId, packet]);
+    }
+    else {
+      this.broker.publish(`minecraft/server/${this.clientId}/packet/${pktId}`, packet);
+    }
   }
 
   processMessage(topic, message) {
     if (this.state === states.REGISTERING) {
-      if (topic !== this.mySub) {
+      if (!topic.match(/^minecraft\/client\/[^\/]+\/event\/registered/)) {
         console.warn("Received unexpected message in REGISTERING state", topic);
         return;
       }
@@ -83,20 +95,30 @@ export class Client {
         console.error("Bad registration response payload", message);
         return;
       }
-      if (response.status === "ok" && response.clientId) {
+      if (response.event === "registered" && response.clientId) {
         this.clientId = response.clientId;
-        this.state    = states.CONNECTED;
 
-        let sub = `minecraft/client/${this.clientId}/packet/#`;
+        console.log("Successfully registered. Received client ID", this.clientId);
+        let sub = `minecraft/client/${this.clientId}/#`;
         this.broker.subscribe(
           sub,
           err => {
             if (err) {
               console.error("Failed to subscribe to ", sub);
             }
+            else {
+              this.state = states.CONNECTED;
+              while (this.packets.length) {
+                let params = this.packets.shift();
+                this.processPacket(params[0], params[1]);
+              }
+            }
           }
         );
         
+      }
+      else {
+        console.log("Malformed message:", topic, message, response);
       }
     }
     else if (this.state === states.CONNECTED) {
@@ -106,7 +128,10 @@ export class Client {
     }
   }
 
-  
+  clientDisconnect() {
+    this.states = states.UNCONNECTED;
+    console.log("Disconnected");
+  }
 
   
 };

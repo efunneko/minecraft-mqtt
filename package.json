@@ -24,6 +24,7 @@
   "homepage": "https://github.com/efunneko/minecraft-mqtt#readme",
   "dependencies": {
     "mqtt": "^3.0.0",
+    "node-getopt": "^0.3.2",
     "source-map-support": "^0.5.9",
     "uuid": "^3.3.3"
   },

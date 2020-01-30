@@ -16,6 +16,7 @@ export class Server {
     this.serverAddr      = serverAddr;
     this.state           = states.UNCONNECTED;
     this.clientSeqNumber = 1;
+    this.clients         = {};
     
     // Subscribe to server stuff
     // TBD - should we add a 'server-name' to allow multiple of these on
@@ -38,6 +39,7 @@ export class Server {
     let matches;
     if (topic.match(/^minecraft\/server\/.*?\/register/)) {
       // New client
+      console.log("Registering new client");
       this.createNewClient(message);
     }
     else if ((matches = topic.match(/^minecraft\/server\/([^\/]+)\/packet/))) {
@@ -53,6 +55,7 @@ export class Server {
 
   createNewClient(registrationMessage) {
     let message;
+    console.log("Creating new client with ID", this.clientSeqNumber);
     try {
       message    = JSON.parse(registrationMessage);
     }
@@ -84,7 +87,7 @@ export class Server {
     
     let respTopic = `minecraft/client/${clientUuid}/event/registered`;
     let message = {
-      status:   "registered",
+      event:    "registered",
       clientId: clientId
     };
 

@@ -11,7 +11,7 @@ module.exports = {
   },
   output: {
     path: path.resolve(__dirname, "dist"),
-    filename: "gen-release-notes.js"
+    filename: "minecraft-mqtt-proxy.js"
   },
   devtool: 'inline-source-map',
   externals: [nodeExternals()],
