@@ -8,7 +8,7 @@ const mqtt = require('mqtt');
 
 import {utils}        from './utils.js';
 import {Server}       from './server.js';
-import {ClientServer} from './clientServer.js';
+import {ClientServer} from './client-server.js';
 
 
 class Main {
