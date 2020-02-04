@@ -3,12 +3,12 @@
 
 require('source-map-support').install();
 
-const net  = require('net');
+//const net  = require('net');
 const mqtt = require('mqtt');
 
-import {utils}  from './utils.js';
-import {Server} from './server.js';
-import {Client} from './client.js';
+import {utils}        from './utils.js';
+import {Server}       from './server.js';
+import {ClientServer} from './clientServer.js';
 
 
 class Main {
@@ -22,6 +22,7 @@ class Main {
       ['', 'password=<password>', 'Password for broker'],
       ['h', 'help']
     ]);
+
 
     // Verify we have the required parameters
     for (let name of ["broker-url", "username", "password"]) {
@@ -64,22 +65,22 @@ class Main {
     console.log("After connect");
     broker.on('connect', () => {
       console.log("Connected to broker with mode ", this.mode);
+
       // Is this a client or a server?
       if (this.mode === "server") {
         this.server = new Server(broker, this.args.server);
       }
       else if (this.mode === "client") {
-        this.client = new Client(broker, this.listenPort);
+        this.client = new ClientServer(broker, this.listenPort);
       }
-
+      
     });
- 
-
-    
-    
     
   }
 
+  connect(client) {
+    console.log("New client connection");
+  }
 
 
 }

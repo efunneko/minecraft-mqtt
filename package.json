@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/efunneko/minecraft-mqtt#readme",
   "dependencies": {
+    "minecraft-protocol": "^1.10.0",
     "mqtt": "^3.0.0",
     "node-getopt": "^0.3.2",
     "source-map-support": "^0.5.9",

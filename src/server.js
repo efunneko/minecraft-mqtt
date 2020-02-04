@@ -1,7 +1,4 @@
 
-const uuidv4 = require('uuid/v4');
-const net    = require('net');
-
 import {ServerConnection} from './server-connection.js';
 
 const states = {
@@ -11,10 +8,11 @@ const states = {
 };
 
 export class Server {
-  constructor(broker, serverAddr) {
+  constructor(broker, serverAddr, version) {
     this.broker          = broker;
     this.serverAddr      = serverAddr;
     this.state           = states.UNCONNECTED;
+    this.version         = version;
     this.clientSeqNumber = 1;
     this.clients         = {};
     
@@ -42,11 +40,20 @@ export class Server {
       console.log("Registering new client");
       this.createNewClient(message);
     }
-    else if ((matches = topic.match(/^minecraft\/server\/([^\/]+)\/packet/))) {
+    else if ((matches = topic.match(/^minecraft\/server\/([^\/]+)\/pkt/))) {
       let clientId = matches[1];
       if (clientId && this.clients[clientId]) {
         this.clients[clientId].sendPacket(message);
       }
+    }
+    else if ((matches = topic.match(/^minecraft\/server\/([^\/]+)\/event/))) {
+      let clientId = matches[1];
+      if (clientId && this.clients[clientId]) {
+        this.clients[clientId].onEvent(message);
+      }
+    }
+    else if ((matches = topic.match(/^minecraft\/server\/([^\/]+)\/info/))) {
+      this.getInfo(message);
     }
     else {
       console.log("Unexpected message on topic", topic);
@@ -65,12 +72,17 @@ export class Server {
     }
 
     let clientUuid = message.clientUuid;
+    let username   = message.username;
     let clientId   = this.clientSeqNumber++;
+
+    this.onConnect(clientUuid, clientId);
 
     this.clients[clientId] = new ServerConnection(
       {
         broker:     this.broker,
         serverAddr: this.serverAddr,
+        version:    this.version,
+        username:   username,
         clientId:   clientId,
         callbacks:  {
           onPacket:     (cId, pktId,
@@ -91,6 +103,7 @@ export class Server {
       clientId: clientId
     };
 
+    console.log("registration complete:", respTopic, message);
     this.broker.publish(respTopic,
                         JSON.stringify(message));
     
@@ -106,9 +119,30 @@ export class Server {
     delete(this.clients[clientId]);
   }
 
-  onPacket(clientId, pktId, packet) {
-    let topic   = `minecraft/client/${clientId}/packet/${pktId}`;
+  onPacket(clientId, packet, meta) {
+    let topic   = `minecraft/client/${clientId}/pkt/${meta.name}`;
     this.broker.publish(topic, packet);
+  }
+
+  getInfo(message) {
+    let request;
+    try {
+      request    = JSON.parse(message);
+    }
+    catch(e) {
+      console.error("Invalid message:", message);
+      return;
+    }
+
+    let replyTo = request.replyTo;
+
+    if (replyTo) {
+      let response = {
+        clients: Object.values(this.clients).map(client => { return {id: client.clientId, username: client.username};}),
+      };
+      this.broker.publish(replyTo, JSON.stringify(response));
+    }
+    
   }
   
 }
